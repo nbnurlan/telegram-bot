@@ -28,7 +28,7 @@ def log_message(message):
     print(f"[{timestamp}] {message}")
 
 def send_message(chat_id, text, reply_to_message_id=None):
-    """Xabar yuborish"""
+    """Xaar yuborish"""
     try:
         url = f"{BASE_URL}/sendMessage"
         data = {"chat_id": chat_id, "text": text}
@@ -38,71 +38,6 @@ def send_message(chat_id, text, reply_to_message_id=None):
         response = requests.post(url, data=data)
         return response.json()
     except Exception as e:
-        log_message(f"❌ Xabar yuborishda xato: {e}")
-        return None
-
-def send_video(chat_id, video_url, caption):
-    """Video yuborish"""
-    try:
-        url = f"{BASE_URL}/sendVideo"
-        data = {
-            "chat_id": chat_id,
-            "video": video_url,
-            "caption": caption,
-            "parse_mode": "HTML"
-        }
-        response = requests.post(url, data=data)
-        return response.json()
-    except Exception as e:
-        log_message(f"❌ Video yuborishda xato: {e}")
-        return None
-
-def find_movie_by_code(code, movies):
-    """Kino kodiga qarab filmni qidirish"""
-    for movie in movies:
-        if movie.get("code") == code:
-            return movie
-    return None
-
-def process_updates():
-    """Xabarlarni qayta ishlash"""
-    offset = 0
-    processed_count = 0
-    movies = load_movies()
-    
-    log_message("🤖 Mobil bot + KINO MODULI ishga tushdi!")
-    log_message(f"📽️ Jami kino: {len(movies)} ta")
-    
-    while True:
-        try:
-            url = f"{BASE_URL}/getUpdates?offset={offset}&timeout=30"
-            response = requests.get(url)
-            data = response.json()
-            
-            if not data.get("ok"):
-                break
-                
-            updates = data.get("result", [])
-            if not updates:
-                continue
-                
-            for update in updates:
-                update_id = update.get("update_id")
-                message = update.get("message", {})
-                chat_id = message.get("chat", {}).get("id")
-                text = message.get("text", "").strip()
-                first_name = message.get("from", {}).get("first_name", "Foydalanuvchi")
-                
-                # KINO KODI TEKSHIRISH
-                movie = find_movie_by_code(text, movies)
-                if movie:
-                    caption = f"🎬 <b>{movie.get('name')}</b>\n\n🆔 Kod: {movie.get('code')}\n✅ Tayyor!"
-                    result = send_video(chat_id, movie.get("video_link"), caption)
-                    if result and result.get("ok"):
-                        log_message(f"✅ Video yuborildi: {first_name} - {movie.get('name')}")
-                        processed_count += 1
-                
-                elif "UZ-5018" in text:
                     reply_text = f"👋 Assalomu alaykum {first_name}!\n\n🆔 Sizning kod: <b>UZ-5018</b>\n✅ Ro'yxatdan o'tgan\n🎯 Tizimda aktiv\n\nSalom bering va bot to'liq ishlayapti!"
                     result = send_message(chat_id, reply_text, update.get("message", {}).get("message_id"))
                     if result and result.get("ok"):
