@@ -14,7 +14,7 @@ from datetime import datetime
 # Bot sozlamalari
 BOT_TOKEN = "8453590241:AAE2XXL5_7FoTg6IMoZCx7KmJgM-cwGc6E0"
 BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
-ADMIN_ID = 123456789  # O'Z TELEGRAM ID INGIZNI YOZING!
+ADMIN_ID = 7021010653  # O'Z TELEGRAM ID INGIZNI YOZING!
 
 # Ma'lumotlar bazasi fayli
 DB_FILE = 'movies_db.json'
