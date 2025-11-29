@@ -14,7 +14,7 @@ from datetime import datetime
 # Bot sozlamalari
 BOT_TOKEN = "8453590241:AAE2XXL5_7FoTg6IMoZCx7KmJgM-cwGc6E0"
 BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
-ADMIN_ID = 7021010653  # O'Z TELEGRAM ID INGIZNI YOZING!
+ADMIN_ID = 123456789  # O'Z TELEGRAM ID INGIZNI YOZING!
 
 # Ma'lumotlar bazasi fayli
 DB_FILE = 'movies_db.json'
@@ -32,16 +32,10 @@ def load_db():
         # Boshlang'ich ma'lumotlar
         initial_db = {
             "101": {
-                "name": "Titanik",
-                "year": "1997",
-                "file_id": "BAACAgIAAxkBAAIBYmZkj...",  # Video file_id
-                "description": "Romantik drama"
+                "file_id": "BAACAgIAAxkBAAIBYmZkj..."  # Video file_id
             },
             "102": {
-                "name": "Avatar",
-                "year": "2009",
-                "file_id": "BAACAgIAAxkBAAIBYmZkj...",
-                "description": "Fantastika"
+                "file_id": "BAACAgIAAxkBAAIBYmZkj..."
             }
         }
         save_db(initial_db)
@@ -118,8 +112,8 @@ def handle_list(chat_id, movies_db):
         return
     
     movie_list = "🎬 <b>Mavjud kinolar:</b>\n\n"
-    for code, movie in sorted(movies_db.items()):
-        movie_list += f"🔢 <code>{code}</code> - {movie['name']} ({movie['year']})\n"
+    for code in sorted(movies_db.keys()):
+        movie_list += f"🔢 <code>{code}</code>\n"
     
     movie_list += "\n💡 Kinoni ko'rish uchun kodini yuboring!"
     send_message(chat_id, movie_list)
@@ -133,17 +127,10 @@ def handle_add_movie(chat_id, user_id):
     text = """
 📝 <b>Yangi kino qo'shish:</b>
 
-Quyidagi formatda ma'lumot yuboring:
-
-<code>KOD | NOM | YIL | TAVSIF</code>
-
-<b>Misol:</b>
-<code>103 | Interstellar | 2014 | Fantastik film</code>
-
-Keyin video faylni yuboring.
+Kino kodini yuboring (masalan: 103)
 """
     send_message(chat_id, text)
-    return "waiting_for_movie_info"
+    return "waiting_for_code"
 
 def handle_admin_panel(chat_id, user_id, movies_db):
     """Admin panel"""
@@ -203,40 +190,31 @@ def process_updates():
                 # Admin video yuborsa (kino qo'shish)
                 if video and is_admin(user_id) and user_states.get(user_id) == "waiting_for_video":
                     file_id = video.get("file_id")
-                    temp_data = temp_movie_data.get(user_id)
+                    code = temp_movie_data.get(user_id)
                     
-                    if temp_data:
-                        movies_db[temp_data['code']] = {
-                            'name': temp_data['name'],
-                            'year': temp_data['year'],
-                            'description': temp_data['description'],
+                    if code:
+                        movies_db[code] = {
                             'file_id': file_id
                         }
                         save_db(movies_db)
                         
-                        send_message(chat_id, f"✅ Kino muvaffaqiyatli qo'shildi!\n\n🔢 Kod: {temp_data['code']}\n🎬 {temp_data['name']}")
+                        send_message(chat_id, f"✅ Kino qo'shildi!\n\n🔢 Kod: {code}")
                         
                         user_states[user_id] = None
                         temp_movie_data[user_id] = None
-                        log_message(f"✅ Yangi kino: {temp_data['name']}")
+                        log_message(f"✅ Yangi kino: Kod {code}")
                 
-                # Admin kino ma'lumotlarini yuborsa
-                elif text and is_admin(user_id) and user_states.get(user_id) == "waiting_for_movie_info":
-                    parts = [p.strip() for p in text.split('|')]
+                # Admin kino kodini yuborsa
+                elif text and is_admin(user_id) and user_states.get(user_id) == "waiting_for_code":
+                    code = text.strip()
                     
-                    if len(parts) == 4:
-                        code, name, year, description = parts
-                        temp_movie_data[user_id] = {
-                            'code': code,
-                            'name': name,
-                            'year': year,
-                            'description': description
-                        }
+                    if code:
+                        temp_movie_data[user_id] = code
                         user_states[user_id] = "waiting_for_video"
                         
-                        send_message(chat_id, f"✅ Ma'lumotlar saqlandi!\n\n🔢 Kod: {code}\n🎬 Nom: {name}\n📅 Yil: {year}\n\nEndi video faylni yuboring.")
+                        send_message(chat_id, f"✅ Kod saqlandi: {code}\n\nEndi video faylni yuboring.")
                     else:
-                        send_message(chat_id, "❌ Noto'g'ri format! Qaytadan urinib ko'ring.")
+                        send_message(chat_id, "❌ Kod kiriting!")
                 
                 # Komandalar
                 elif text == "/start":
@@ -263,11 +241,10 @@ def process_updates():
                         if len(parts) == 2:
                             code = parts[1]
                             if code in movies_db:
-                                movie_name = movies_db[code]['name']
                                 del movies_db[code]
                                 save_db(movies_db)
-                                send_message(chat_id, f"✅ '{movie_name}' o'chirildi!")
-                                log_message(f"🗑️ O'chirildi: {movie_name}")
+                                send_message(chat_id, f"✅ Kod {code} o'chirildi!")
+                                log_message(f"🗑️ O'chirildi: Kod {code}")
                             else:
                                 send_message(chat_id, f"❌ '{code}' kodi topilmadi.")
                         else:
@@ -283,7 +260,7 @@ def process_updates():
                         result = send_video(chat_id, movie['file_id'])
                         
                         if result and result.get("ok"):
-                            log_message(f"✅ Video yuborildi: {first_name} - {movie['name']}")
+                            log_message(f"✅ Video yuborildi: {first_name} - Kod {code}")
                         else:
                             send_message(chat_id, "❌ Xatolik yuz berdi!")
                     else:
