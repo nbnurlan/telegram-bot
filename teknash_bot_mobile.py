@@ -13,7 +13,7 @@ import re
 from datetime import datetime
 
 # ============= SOZLAMALAR =============
-BOT_TOKEN = "8453590241:AAE2XXL5_7FoTg6IMoZCx7KmJgM-cwGc6E0"
+BOT_TOKEN = "8398871257:AAHt_rr3F_DEkDuLV9ndhPzkzqsFzBITHq0"
 ADMIN_ID = 7021010653
 CHANNEL_USERNAME = "@Kinoselected"
 CHANNEL_ID = "@Kinoselected"
